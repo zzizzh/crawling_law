@@ -21,7 +21,11 @@ keyword = "대구 동구 팔공로33길 10"
 driver.get(url)
 
 # 검색 창에 keyword 입력
- 
+driver.find_element_by_xpath(xpath_text).send_keys(keyword)
+try:
+  element = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, xpath_button)))
+except:
+  print("couldn't find element")
 
 # 검색 버튼 클릭하기기
 driver.find_element_by_xpath(xpath_button).click()
@@ -32,6 +36,3 @@ elenemt = driver.find_elements(By.LINK_TEXT, "조례")
 print("-"*100)
 print(element)
 print("-"*100)
-
-
-

@@ -4,10 +4,19 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
+from queue import Queue
+import threading
+
 import urllib.request
 import urllib.parse
 
 from bs4 import BeautifulSoup
+
+def equalType(a, b):
+  if type(a) == type(b):
+    return True
+    
+  return False
 
 # param1 : 크롬 드라이버 경로
 # param2 : 검색할 주소
@@ -197,28 +206,48 @@ def crawling3(driver_path, address):
   results = []
   titles = []
 
-  driver.implicitly_wait(10)
   elements = driver.find_elements(By.PARTIAL_LINK_TEXT, "조례")
+
+  last=""
 
   for element in elements:
 
     if element.get_attribute('class') != 'link':
       continue
-
-    johangs = []
-
-    johangs.append(element.text)
-    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, element.get_attribute('class'))))
-    element.click()
-    time.sleep(5)
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    johangs_tag = soup.find_all("span", {"class":"SPAN_ALLJO"})
     
-    for johang_tag in johangs_tag:
-      johangs.append(johang_tag.text)
+    if "도시계획" not in element.text and "건축" not in element.text and "주차장" not in element.text:
+      continue
 
+    titles.append(element.text)
+
+    WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CLASS_NAME, element.get_attribute('class'))))
     element.click()
-    results.append(johangs)
+
+  elements = driver.find_elements(By.CLASS_NAME, "detail_toggle")
+  end = time.time() - start
+  print("경과시간 : " + str(end))
+
+  for element in elements:
+    if element.text == '':
+      continue
+    WebDriverWait(driver, 10).until(EC.visibility_of(element))
+
+  soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+  toggles = soup.find_all("div", {"class":"detail_toggle"})
+  
+  idx_title = 0
+
+  for toggle in toggles:
+    if toggle.text != '':
+      content = []
+
+      text = toggle.text[:toggle.text.find("법령정보센터 바로가기")]
+      content.append(titles[idx_title])
+      content.append(text)
+      idx_title+=1
+      results.append(content)
+
   
   end = time.time() - start
   print("경과시간 : " + str(end))
@@ -228,8 +257,17 @@ def crawling3(driver_path, address):
 def main():
   driver_path = 'C:\\Users\\user\\workspace\\python\\web_crawling\\chromedriver.exe'
   address = '서울특별시 종로구 세종로 77-1'
-  results = crawling(driver_path, address)
+  results = crawling3(driver_path, address)
 
+  threads = []
+
+  for i in range(1,10):
+    t = threading.Thread(target = crawling3, args=('C:\\Users\\user\\workspace\\python\\web_crawling\\chromedriver.exe', '서울특별시 종로구 세종로 77-1'))
+    t.start()
+    threads.append(t)
+
+  for thread in threads:
+    thread.join()
 
   # 결과물 출력
   print("-"*100)

@@ -255,7 +255,6 @@ def crawling3(driver_path, address):
   return results
 
 def main():
-  driver_path = 'C:\\Users\\user\\workspace\\python\\web_crawling\\chromedriver.exe'
   address = '서울특별시 종로구 세종로 77-1'
   results = crawling3(driver_path, address)
 
